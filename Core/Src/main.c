@@ -44,6 +44,9 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc;
+DMA_HandleTypeDef hdma_adc;
+
 TIM_HandleTypeDef htim1;
 
 UART_HandleTypeDef huart1;
@@ -52,6 +55,7 @@ UART_HandleTypeDef huart1;
 //██████████████████████████████ DEĞİŞKEN TANIMLAMALARI ████████████████████████████████████
 
  uint16_t duty=0;
+ uint16_t adc_buffer[5],adc[5];
  uint8_t hall_input=0;
  char data[15]=" ";
 
@@ -61,8 +65,10 @@ UART_HandleTypeDef huart1;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_ADC_Init(void);
 /* USER CODE BEGIN PFP */
 //██████████████████████████████ FONKSİYON PROTOTİPLERİ ████████████████████████████████████
 
@@ -103,8 +109,10 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_TIM1_Init();
+  MX_ADC_Init();
   /* USER CODE BEGIN 2 */
   //██████████████████████████████ İLK KURULUMLAR ████████████████████████████████████
 
@@ -115,6 +123,8 @@ int main(void)
        __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,0);
        __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,0);
        __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,0);
+
+       HAL_ADC_Start_DMA(&hadc, (uint32_t*)adc_buffer, 5);
 
        HAL_GPIO_WritePin(GPIOF, GPIO_PIN_6, GPIO_PIN_RESET); // OverCurrent comparator threshold=100mV , 20A
        HAL_GPIO_WritePin(GPIOF, GPIO_PIN_7, GPIO_PIN_SET);
@@ -129,88 +139,106 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  int i;
+       int ilk=0;
   while (1)
   {
-	  i++;
-	  if(i>=10000)i=0;
+
 
 	  //	 HAL_ADC_Start(&hadc1);
 	  //	 HAL_Delay(500);
 	  //	 adc=HAL_ADC_GetValue(&hadc1);
 
-	  //	 sprintf(data,"adc=%d\n\r",adc);
-	  //	 HAL_UART_Transmit(&huart1, (uint8_t*)data, strlen(data), 1000);
+	    adc[0]=adc_buffer[0];
+	  	adc[1]=adc_buffer[1];
+	  	adc[2]=adc_buffer[2];
+	  	adc[3]=adc_buffer[3];
+	  	adc[4]=adc_buffer[4];
+
+//	  	sprintf(data,"cs1=%d\n\r",adc[0]);
+//	  	HAL_UART_Transmit(&huart1, (uint8_t*)data, strlen(data), 100);
+//	  	sprintf(data,"cs2=%d\n\r",adc[1]);
+//	  	HAL_UART_Transmit(&huart1, (uint8_t*)data, strlen(data), 100);
+//	  	sprintf(data,"cs3=%d\n\r",adc[2]);
+//	  	HAL_UART_Transmit(&huart1, (uint8_t*)data, strlen(data), 100);
+//	    sprintf(data,"cs4=%d\n\r",adc[3]);
+//	    HAL_UART_Transmit(&huart1, (uint8_t*)data, strlen(data), 100);
+//	  	sprintf(data,"cs5=%d\n\r",adc[4]);
+//	  	HAL_UART_Transmit(&huart1, (uint8_t*)data, strlen(data), 100);
 
 	  //	 sprintf(data,"Hall_input=%d\n\r",hall_input);
 	  //	 HAL_UART_Transmit(&huart1, (uint8_t*)data, strlen(data), 1000);
-	  //	 HAL_Delay(250);
+	  	 HAL_Delay(50);
 
-	  hall_input= GPIOA->IDR & 0x7;
-	  duty=1000;
 
 	  if(HAL_GPIO_ReadPin(GPIOF, GPIO_PIN_0)==GPIO_PIN_RESET){
 
-		switch(hall_input){
-			 case 1:{
-				 TIM1->CCR2=0;
-				 TIM1->CCR1=0;
-				 GPIOB->ODR &= 0x1FFF;
-				 TIM1->CCR3=duty;
-				 GPIOB->ODR |= 0x2000;
-				 break;
-				 }
-			 case 2:{
-				 TIM1->CCR1=0;
-				 TIM1->CCR3=0;
-				 GPIOB->ODR &= 0x1FFF;
-				 TIM1->CCR2=duty;
-				 GPIOB->ODR |= 0x8000;
-				 break;
-				 }
-			 case 3:{
-				 TIM1->CCR1=0;
-				 TIM1->CCR3=0;
-				 GPIOB->ODR &= 0x1FFF;
-				 TIM1->CCR2=duty;
-				 GPIOB->ODR |= 0x2000;
-				 break;
-				 }
-			 case 4:{
-				 TIM1->CCR2=0;
-				 TIM1->CCR3=0;
-				 GPIOB->ODR &= 0x1FFF;
-				 TIM1->CCR1=duty;
-				 GPIOB->ODR |= 0x4000;
-				 break;
-				 }
-			 case 5:{
-				 TIM1->CCR1=0;
-				 TIM1->CCR2=0;
-				 GPIOB->ODR &= 0x1FFF;
-				 TIM1->CCR3=duty;
-				 GPIOB->ODR |= 0x4000;
-				 break;
-				 }
-			 case 6:{
-				 TIM1->CCR2=0;
-				 TIM1->CCR3=0;
-				 GPIOB->ODR &= 0x1FFF;
-				 TIM1->CCR1=duty;
-				 GPIOB->ODR |= 0x8000;
-				 break;
-				 }
-			 default:{
-				 TIM1->CCR2=0;
-				 TIM1->CCR1=0;
-				 TIM1->CCR3=0;
-				 GPIOB->ODR &= 0x1FFF;
-				 break;
-				 }
-			 }
+		  if(ilk==0){
+		  duty=750;
+		  ilk=1;
+		  hall_input= GPIOA->IDR & 0x7;
+		  			switch(hall_input){
+		  			 case 1:{
+		  				 TIM1->CCR2=0;
+		  				 TIM1->CCR1=0;
+		  				 GPIOB->ODR &= 0x1FFF;
+		  				 TIM1->CCR3=duty;
+		  				 GPIOB->ODR |= 0x2000;
+		  				 break;
+		  				 }
+		  			 case 2:{
+		  				 TIM1->CCR1=0;
+		  				 TIM1->CCR3=0;
+		  				 GPIOB->ODR &= 0x1FFF;
+		  				 TIM1->CCR2=duty;
+		  				 GPIOB->ODR |= 0x8000;
+		  				 break;
+		  				 }
+		  			 case 3:{
+		  				 TIM1->CCR1=0;
+		  				 TIM1->CCR3=0;
+		  				 GPIOB->ODR &= 0x1FFF;
+		  				 TIM1->CCR2=duty;
+		  				 GPIOB->ODR |= 0x2000;
+		  				 break;
+		  				 }
+		  			 case 4:{
+		  				 TIM1->CCR2=0;
+		  				 TIM1->CCR3=0;
+		  				 GPIOB->ODR &= 0x1FFF;
+		  				 TIM1->CCR1=duty;
+		  				 GPIOB->ODR |= 0x4000;
+		  				 break;
+		  				 }
+		  			 case 5:{
+		  				 TIM1->CCR1=0;
+		  				 TIM1->CCR2=0;
+		  				 GPIOB->ODR &= 0x1FFF;
+		  				 TIM1->CCR3=duty;
+		  				 GPIOB->ODR |= 0x4000;
+		  				 break;
+		  				 }
+		  			 case 6:{
+		  				 TIM1->CCR2=0;
+		  				 TIM1->CCR3=0;
+		  				 GPIOB->ODR &= 0x1FFF;
+		  				 TIM1->CCR1=duty;
+		  				 GPIOB->ODR |= 0x8000;
+		  				 break;
+		  				 }
+		  			 default:{
+		  				 TIM1->CCR2=0;
+		  				 TIM1->CCR1=0;
+		  				 TIM1->CCR3=0;
+		  				 GPIOB->ODR &= 0x1FFF;
+		  				 break;
+		  				 }
+		  			 }
+		  }
 
 	  }
 	  else{
+		 duty=0;
+		 ilk=0;
 		 TIM1->CCR2=0;
 		 TIM1->CCR1=0;
 		 TIM1->CCR3=0;
@@ -237,9 +265,11 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_HSI14;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSI14State = RCC_HSI14_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.HSI14CalibrationValue = 16;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL12;
@@ -269,6 +299,86 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief ADC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC_Init(void)
+{
+
+  /* USER CODE BEGIN ADC_Init 0 */
+
+  /* USER CODE END ADC_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC_Init 1 */
+
+  /* USER CODE END ADC_Init 1 */
+  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+  */
+  hadc.Instance = ADC1;
+  hadc.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
+  hadc.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc.Init.ScanConvMode = ADC_SCAN_DIRECTION_FORWARD;
+  hadc.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc.Init.LowPowerAutoWait = DISABLE;
+  hadc.Init.LowPowerAutoPowerOff = DISABLE;
+  hadc.Init.ContinuousConvMode = ENABLE;
+  hadc.Init.DiscontinuousConvMode = DISABLE;
+  hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc.Init.DMAContinuousRequests = ENABLE;
+  hadc.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  if (HAL_ADC_Init(&hadc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure for the selected ADC regular channel to be converted.
+  */
+  sConfig.Channel = ADC_CHANNEL_3;
+  sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
+  sConfig.SamplingTime = ADC_SAMPLETIME_7CYCLES_5;
+  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure for the selected ADC regular channel to be converted.
+  */
+  sConfig.Channel = ADC_CHANNEL_4;
+  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure for the selected ADC regular channel to be converted.
+  */
+  sConfig.Channel = ADC_CHANNEL_5;
+  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure for the selected ADC regular channel to be converted.
+  */
+  sConfig.Channel = ADC_CHANNEL_6;
+  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure for the selected ADC regular channel to be converted.
+  */
+  sConfig.Channel = ADC_CHANNEL_9;
+  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC_Init 2 */
+
+  /* USER CODE END ADC_Init 2 */
+
+}
+
+/**
   * @brief TIM1 Initialization Function
   * @param None
   * @retval None
@@ -280,6 +390,7 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 0 */
 
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
   TIM_OC_InitTypeDef sConfigOC = {0};
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
@@ -290,10 +401,19 @@ static void MX_TIM1_Init(void)
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 0;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 2999;
+  htim1.Init.Period = 1499;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim1.Init.RepetitionCounter = 0;
+  htim1.Init.RepetitionCounter = 1;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
   if (HAL_TIM_PWM_Init(&htim1) != HAL_OK)
   {
     Error_Handler();
@@ -327,9 +447,9 @@ static void MX_TIM1_Init(void)
   sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
   sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
   sBreakDeadTimeConfig.DeadTime = 0;
-  sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
+  sBreakDeadTimeConfig.BreakState = TIM_BREAK_ENABLE;
   sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
-  sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
+  sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_ENABLE;
   if (HAL_TIMEx_ConfigBreakDeadTime(&htim1, &sBreakDeadTimeConfig) != HAL_OK)
   {
     Error_Handler();
@@ -373,6 +493,17 @@ static void MX_USART1_UART_Init(void)
   /* USER CODE BEGIN USART1_Init 2 */
 
   /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
 
 }
 
@@ -433,15 +564,85 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_1_IRQn, 2, 0);
+  HAL_NVIC_SetPriority(EXTI0_1_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(EXTI0_1_IRQn);
 
-  HAL_NVIC_SetPriority(EXTI2_3_IRQn, 2, 0);
+  HAL_NVIC_SetPriority(EXTI2_3_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(EXTI2_3_IRQn);
 
 }
 
 /* USER CODE BEGIN 4 */
+//██████████████████████████████ KULLANICI TANIMLI FONKSİYONLAR ████████████████████████████████████
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
+
+
+
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+
+	hall_input= GPIOA->IDR & 0x7;
+			switch(hall_input){
+			 case 1:{
+				 TIM1->CCR2=0;
+				 TIM1->CCR1=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 TIM1->CCR3=duty;
+				 GPIOB->ODR |= 0x2000;
+				 break;
+				 }
+			 case 2:{
+				 TIM1->CCR1=0;
+				 TIM1->CCR3=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 TIM1->CCR2=duty;
+				 GPIOB->ODR |= 0x8000;
+				 break;
+				 }
+			 case 3:{
+				 TIM1->CCR1=0;
+				 TIM1->CCR3=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 TIM1->CCR2=duty;
+				 GPIOB->ODR |= 0x2000;
+				 break;
+				 }
+			 case 4:{
+				 TIM1->CCR2=0;
+				 TIM1->CCR3=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 TIM1->CCR1=duty;
+				 GPIOB->ODR |= 0x4000;
+				 break;
+				 }
+			 case 5:{
+				 TIM1->CCR1=0;
+				 TIM1->CCR2=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 TIM1->CCR3=duty;
+				 GPIOB->ODR |= 0x4000;
+				 break;
+				 }
+			 case 6:{
+				 TIM1->CCR2=0;
+				 TIM1->CCR3=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 TIM1->CCR1=duty;
+				 GPIOB->ODR |= 0x8000;
+				 break;
+				 }
+			 default:{
+				 TIM1->CCR2=0;
+				 TIM1->CCR1=0;
+				 TIM1->CCR3=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 break;
+				 }
+			 }
+
+}
 
 /* USER CODE END 4 */
 

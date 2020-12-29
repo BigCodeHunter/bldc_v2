@@ -26,6 +26,7 @@
 
 #include "string.h"
 #include "stdio.h"
+#include "state_machine.h"
 
 /* USER CODE END Includes */
 
@@ -176,63 +177,63 @@ int main(void)
 		  duty=750;
 		  ilk=1;
 		  hall_input= GPIOA->IDR & 0x7;
-		  			switch(hall_input){
-		  			 case 1:{
-		  				 TIM1->CCR2=0;
-		  				 TIM1->CCR1=0;
-		  				 GPIOB->ODR &= 0x1FFF;
-		  				 TIM1->CCR3=duty;
-		  				 GPIOB->ODR |= 0x2000;
-		  				 break;
-		  				 }
-		  			 case 2:{
-		  				 TIM1->CCR1=0;
-		  				 TIM1->CCR3=0;
-		  				 GPIOB->ODR &= 0x1FFF;
-		  				 TIM1->CCR2=duty;
-		  				 GPIOB->ODR |= 0x8000;
-		  				 break;
-		  				 }
-		  			 case 3:{
-		  				 TIM1->CCR1=0;
-		  				 TIM1->CCR3=0;
-		  				 GPIOB->ODR &= 0x1FFF;
-		  				 TIM1->CCR2=duty;
-		  				 GPIOB->ODR |= 0x2000;
-		  				 break;
-		  				 }
-		  			 case 4:{
-		  				 TIM1->CCR2=0;
-		  				 TIM1->CCR3=0;
-		  				 GPIOB->ODR &= 0x1FFF;
-		  				 TIM1->CCR1=duty;
-		  				 GPIOB->ODR |= 0x4000;
-		  				 break;
-		  				 }
-		  			 case 5:{
-		  				 TIM1->CCR1=0;
-		  				 TIM1->CCR2=0;
-		  				 GPIOB->ODR &= 0x1FFF;
-		  				 TIM1->CCR3=duty;
-		  				 GPIOB->ODR |= 0x4000;
-		  				 break;
-		  				 }
-		  			 case 6:{
-		  				 TIM1->CCR2=0;
-		  				 TIM1->CCR3=0;
-		  				 GPIOB->ODR &= 0x1FFF;
-		  				 TIM1->CCR1=duty;
-		  				 GPIOB->ODR |= 0x8000;
-		  				 break;
-		  				 }
-		  			 default:{
-		  				 TIM1->CCR2=0;
-		  				 TIM1->CCR1=0;
-		  				 TIM1->CCR3=0;
-		  				 GPIOB->ODR &= 0x1FFF;
-		  				 break;
-		  				 }
-		  			 }
+			switch(hall_input){
+			 case 1:{
+				 TIM1->CCR2=0;
+				 TIM1->CCR1=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 TIM1->CCR3=duty;
+				 GPIOB->ODR |= 0x2000;
+				 break;
+				 }
+			 case 2:{
+				 TIM1->CCR1=0;
+				 TIM1->CCR3=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 TIM1->CCR2=duty;
+				 GPIOB->ODR |= 0x8000;
+				 break;
+				 }
+			 case 3:{
+				 TIM1->CCR1=0;
+				 TIM1->CCR3=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 TIM1->CCR2=duty;
+				 GPIOB->ODR |= 0x2000;
+				 break;
+				 }
+			 case 4:{
+				 TIM1->CCR2=0;
+				 TIM1->CCR3=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 TIM1->CCR1=duty;
+				 GPIOB->ODR |= 0x4000;
+				 break;
+				 }
+			 case 5:{
+				 TIM1->CCR1=0;
+				 TIM1->CCR2=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 TIM1->CCR3=duty;
+				 GPIOB->ODR |= 0x4000;
+				 break;
+				 }
+			 case 6:{
+				 TIM1->CCR2=0;
+				 TIM1->CCR3=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 TIM1->CCR1=duty;
+				 GPIOB->ODR |= 0x8000;
+				 break;
+				 }
+			 default:{
+				 TIM1->CCR2=0;
+				 TIM1->CCR1=0;
+				 TIM1->CCR3=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 break;
+				 }
+			 }
 		  }
 
 	  }

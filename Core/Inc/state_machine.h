@@ -11,24 +11,48 @@
 #include "main.h"
 #include "stdint.h"
 
+extern uint16_t adc_buffer[5],adc[5];
+extern uint16_t duty,speed,pot;
+extern uint8_t hall_input,dir;
+
+extern ADC_HandleTypeDef hadc;
+extern DMA_HandleTypeDef hdma_adc;
+extern TIM_HandleTypeDef htim1;
+extern UART_HandleTypeDef huart1;
+
 /*
  *  "flags" ve "states" enumları "state_machine.c" dosyasındaki fonsiyonlar için
  *  kullanılacak olan durumları tanımlayan global değişkenlerdir.
  */
 
 enum flags{
-	START,
-	STOP
+	_IDLE,
+	_START,
+	_STOP,
+	_FAULT
 };
 
 enum states{
+	INIT,
+	IDLE,
+	START_RAMP,
+	RUN,
+	STOP_RAMP,
+	STOP,
+	SWITCH_DIR,
+	FAULT
+};
+
+enum events{
 	TURN_ON,
 	INIT_COMPLETE,
-	START_PENDING,
+	START_REQUEST,
 	START_RAMP_ENDED,
-	STOP_PENDING,
+	STOP_REQUEST,
 	STOP_RAMP_ENDED,
 	STOP_PROCESS_ENDED,
+	DIR_REQUEST,
+	DIR_SWITCHED,
 	FAULT_EVENT,
 	FAULT_RESET
 };

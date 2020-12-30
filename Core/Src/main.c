@@ -26,7 +26,7 @@
 
 #include "string.h"
 #include "stdio.h"
-#include "state_machine.h"
+//#include "state_machine.h"
 
 /* USER CODE END Includes */
 
@@ -55,11 +55,12 @@ UART_HandleTypeDef huart1;
 /* USER CODE BEGIN PV */
 //██████████████████████████████ DEĞİŞKEN TANIMLAMALARI ████████████████████████████████████
 
- uint16_t duty=0;
+ uint16_t duty=0,speed=0,pot=0;
  uint16_t adc_buffer[5],adc[5];
- uint8_t hall_input=0;
+ uint8_t hall_input=0,dir=0;
  char data[15]=" ";
 
+ uint8_t ilk=0,ilk2=0,ilk3=0,cw=0,start_flag=0;
 
 /* USER CODE END PV */
 
@@ -117,10 +118,6 @@ int main(void)
   /* USER CODE BEGIN 2 */
   //██████████████████████████████ İLK KURULUMLAR ████████████████████████████████████
 
-       HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-       HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
-       HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
-
        __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,0);
        __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,0);
        __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,0);
@@ -140,21 +137,9 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-       int ilk=0;
+       
   while (1)
   {
-
-
-	  //	 HAL_ADC_Start(&hadc1);
-	  //	 HAL_Delay(500);
-	  //	 adc=HAL_ADC_GetValue(&hadc1);
-
-	    adc[0]=adc_buffer[0];
-	  	adc[1]=adc_buffer[1];
-	  	adc[2]=adc_buffer[2];
-	  	adc[3]=adc_buffer[3];
-	  	adc[4]=adc_buffer[4];
-
 //	  	sprintf(data,"cs1=%d\n\r",adc[0]);
 //	  	HAL_UART_Transmit(&huart1, (uint8_t*)data, strlen(data), 100);
 //	  	sprintf(data,"cs2=%d\n\r",adc[1]);
@@ -166,84 +151,61 @@ int main(void)
 //	  	sprintf(data,"cs5=%d\n\r",adc[4]);
 //	  	HAL_UART_Transmit(&huart1, (uint8_t*)data, strlen(data), 100);
 
-	  //	 sprintf(data,"Hall_input=%d\n\r",hall_input);
-	  //	 HAL_UART_Transmit(&huart1, (uint8_t*)data, strlen(data), 1000);
-	  	 HAL_Delay(50);
+//	 	sprintf(data,"Hall_input=%d\n\r",hall_input);
+//	 	HAL_UART_Transmit(&huart1, (uint8_t*)data, strlen(data), 1000);
 
+//	    sprintf(data,"duty=%d\n\r",duty);
+//	    HAL_UART_Transmit(&huart1, (uint8_t*)data, strlen(data), 100);
+	  	
+		adc[0]=adc_buffer[0];
+		adc[1]=adc_buffer[1];
+		adc[2]=adc_buffer[2];
+		adc[3]=adc_buffer[3];
+		adc[4]=adc_buffer[4];
 
-	  if(HAL_GPIO_ReadPin(GPIOF, GPIO_PIN_0)==GPIO_PIN_RESET){
+	  	HAL_Delay(20);
 
+	  if(HAL_GPIO_ReadPin(GPIOF, GPIO_PIN_0)==GPIO_PIN_RESET && ilk==0){
 		  if(ilk==0){
-		  duty=750;
-		  ilk=1;
-		  hall_input= GPIOA->IDR & 0x7;
-			switch(hall_input){
-			 case 1:{
-				 TIM1->CCR2=0;
-				 TIM1->CCR1=0;
-				 GPIOB->ODR &= 0x1FFF;
-				 TIM1->CCR3=duty;
-				 GPIOB->ODR |= 0x2000;
-				 break;
-				 }
-			 case 2:{
-				 TIM1->CCR1=0;
-				 TIM1->CCR3=0;
-				 GPIOB->ODR &= 0x1FFF;
-				 TIM1->CCR2=duty;
-				 GPIOB->ODR |= 0x8000;
-				 break;
-				 }
-			 case 3:{
-				 TIM1->CCR1=0;
-				 TIM1->CCR3=0;
-				 GPIOB->ODR &= 0x1FFF;
-				 TIM1->CCR2=duty;
-				 GPIOB->ODR |= 0x2000;
-				 break;
-				 }
-			 case 4:{
-				 TIM1->CCR2=0;
-				 TIM1->CCR3=0;
-				 GPIOB->ODR &= 0x1FFF;
-				 TIM1->CCR1=duty;
-				 GPIOB->ODR |= 0x4000;
-				 break;
-				 }
-			 case 5:{
-				 TIM1->CCR1=0;
-				 TIM1->CCR2=0;
-				 GPIOB->ODR &= 0x1FFF;
-				 TIM1->CCR3=duty;
-				 GPIOB->ODR |= 0x4000;
-				 break;
-				 }
-			 case 6:{
-				 TIM1->CCR2=0;
-				 TIM1->CCR3=0;
-				 GPIOB->ODR &= 0x1FFF;
-				 TIM1->CCR1=duty;
-				 GPIOB->ODR |= 0x8000;
-				 break;
-				 }
-			 default:{
-				 TIM1->CCR2=0;
-				 TIM1->CCR1=0;
-				 TIM1->CCR3=0;
-				 GPIOB->ODR &= 0x1FFF;
-				 break;
-				 }
-			 }
+			  ilk=1;
+			  if(start_flag==0)start_flag=1;
+			  else start_flag=0;
 		  }
+	  }
+	  else if(HAL_GPIO_ReadPin(GPIOF, GPIO_PIN_0)==GPIO_PIN_SET){
+		  ilk=0;
+	  }
+	  
+	  if(HAL_GPIO_ReadPin(GPIOF, GPIO_PIN_1)==GPIO_PIN_RESET && ilk3==0){
+	  		  if(ilk3==0){
+	  			  ilk3=1;
+	  			  if(cw==0)cw=1;
+	  			  else cw=0;
+	  		  }
+	  	  }
+	  	  else if(HAL_GPIO_ReadPin(GPIOF, GPIO_PIN_1)==GPIO_PIN_SET){
+	  		  ilk3=0;
+	  	  }
 
+	  if(start_flag==1){
+		  duty=adc[3]*1600/4095;
+		  if(duty>1500)duty=1500;
+		  if(ilk2==0){
+			  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+			  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+			  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+			  __HAL_GPIO_EXTI_GENERATE_SWIT(GPIO_PIN_0);
+		  }
 	  }
 	  else{
-		 duty=0;
-		 ilk=0;
-		 TIM1->CCR2=0;
-		 TIM1->CCR1=0;
-		 TIM1->CCR3=0;
-		 GPIOB->ODR &= 0x1FFF;
+		  duty=0;
+		  HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
+		  HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
+		  HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_3);
+//		  TIM1->CCR2=0;
+//		  TIM1->CCR1=0;
+//		  TIM1->CCR3=0;
+//		  GPIOB->ODR &= 0x1FFF;
 	  }
 
     /* USER CODE END WHILE */
@@ -585,7 +547,11 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 
 	hall_input= GPIOA->IDR & 0x7;
-			switch(hall_input){
+
+	if(!start_flag)hall_input=0;
+
+		if(cw==0)
+		switch(hall_input){
 			 case 1:{
 				 TIM1->CCR2=0;
 				 TIM1->CCR1=0;
@@ -642,6 +608,66 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 				 break;
 				 }
 			 }
+		else{
+		switch(hall_input){
+			case 1:{
+				TIM1->CCR2=0;
+				TIM1->CCR3=0;
+				GPIOB->ODR &= 0x1FFF;
+				TIM1->CCR1=duty;
+				GPIOB->ODR |= 0x8000;
+				break;
+			 }
+			case 2:{
+				TIM1->CCR1=0;
+				TIM1->CCR2=0;
+				GPIOB->ODR &= 0x1FFF;
+				TIM1->CCR3=duty;
+				GPIOB->ODR |= 0x4000;
+				break;
+			 }
+			case 3:{
+				 TIM1->CCR2=0;
+				 TIM1->CCR3=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 TIM1->CCR1=duty;
+				 GPIOB->ODR |= 0x4000;
+				 break;
+			 }
+			case 4:{
+				 TIM1->CCR1=0;
+				 TIM1->CCR3=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 TIM1->CCR2=duty;
+				 GPIOB->ODR |= 0x2000;
+				 break;
+			 }
+			case 5:{
+				 TIM1->CCR1=0;
+				 TIM1->CCR3=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 TIM1->CCR2=duty;
+				 GPIOB->ODR |= 0x8000;
+				 break;
+			 }
+			case 6:{
+				 TIM1->CCR2=0;
+				 TIM1->CCR1=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 TIM1->CCR3=duty;
+				 GPIOB->ODR |= 0x2000;
+				 break;
+			 }
+			default:{
+				 TIM1->CCR2=0;
+				 TIM1->CCR1=0;
+				 TIM1->CCR3=0;
+				 GPIOB->ODR &= 0x1FFF;
+				 break;
+			 }
+			}
+		}
+
 
 }
 
